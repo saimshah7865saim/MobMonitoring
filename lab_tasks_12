@@ -1,0 +1,224 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  Alert,
+  SafeAreaView,
+  StatusBar,
+  ScrollView,
+} from 'react-native';
+
+/* ---------------- Reusable button ---------------- */
+const Btn = ({ title, onPress, color = '#2563eb' }) => (
+  <TouchableOpacity
+    style={[styles.btn, { backgroundColor: color }]}
+    onPress={onPress}
+    activeOpacity={0.8}>
+    <Text style={styles.btnText}>{title}</Text>
+  </TouchableOpacity>
+);
+
+/* ---------------- 1) Home screen (3 buttons) ---------------- */
+const HomeScreen = ({ go }) => (
+  <View style={styles.center}>
+    <Text style={styles.title}>Parcel Manager</Text>
+    <Btn title="Add Parcel" onPress={() => go('add')} />
+    <Btn title="View All Parcel" onPress={() => go('all')} color="#16a34a" />
+    <Btn title="Track Parcel" onPress={() => go('track')} color="#ea580c" />
+  </View>
+);
+
+/* ---------------- 2) Add Parcel screen ---------------- */
+const AddParcelScreen = ({ go, addParcel }) => {
+  const [name, setName] = useState('');
+  const [rNumber, setRNumber] = useState('');
+  const [weight, setWeight] = useState('');
+  const [type, setType] = useState('');
+
+  const onAdd = () => {
+    if (!name.trim() || !rNumber.trim() || !weight.trim() || !type.trim()) {
+      Alert.alert('Missing data', 'Please fill all fields');
+      return;
+    }
+    addParcel({
+      id: Date.now().toString(),
+      name: name.trim(),
+      rNumber: rNumber.trim(),
+      weight: weight.trim(),
+      type: type.trim(),
+      status: 'Booked',
+    });
+    Alert.alert('Success', 'Parcel added', [
+      { text: 'OK', onPress: () => go('home') },
+    ]);
+  };
+
+  return (
+    <ScrollView contentContainerStyle={styles.form}>
+      <Text style={styles.title}>Add Parcel</Text>
+
+      <Text style={styles.label}>Name</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Receiver name"
+        value={name}
+        onChangeText={setName}
+      />
+
+      <Text style={styles.label}>R. Number</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Registration number"
+        value={rNumber}
+        onChangeText={setRNumber}
+      />
+
+      <Text style={styles.label}>Weight (kg)</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="e.g. 2.5"
+        keyboardType="numeric"
+        value={weight}
+        onChangeText={setWeight}
+      />
+
+      <Text style={styles.label}>Type</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="e.g. Document, Box, Fragile"
+        value={type}
+        onChangeText={setType}
+      />
+
+      <Btn title="Add" onPress={onAdd} color="#16a34a" />
+      <Btn title="Back" onPress={() => go('home')} color="#6b7280" />
+    </ScrollView>
+  );
+};
+
+/* ---------------- 3) View All Parcels screen ---------------- */
+const AllParcelsScreen = ({ go, parcels }) => (
+  <View style={styles.flex}>
+    <Text style={[styles.title, { marginTop: 20 }]}>All Parcels</Text>
+    <FlatList
+      data={parcels}
+      keyExtractor={(item) => item.id}
+      contentContainerStyle={{ padding: 16 }}
+      ListEmptyComponent={<Text style={styles.empty}>No parcels yet</Text>}
+      renderItem={({ item }) => (
+        <View style={styles.card}>
+          <Text style={styles.cardName}>{item.name}</Text>
+          <Text>R. Number: {item.rNumber}</Text>
+          <Text>Weight: {item.weight} kg</Text>
+          <Text>Type: {item.type}</Text>
+          <Text>Status: {item.status}</Text>
+        </View>
+      )}
+    />
+    <View style={{ padding: 16 }}>
+      <Btn title="Back" onPress={() => go('home')} color="#6b7280" />
+    </View>
+  </View>
+);
+
+/* ---------------- 4) Track Parcel screen ---------------- */
+const TrackParcelScreen = ({ go, parcels }) => {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState(null);
+  const [searched, setSearched] = useState(false);
+
+  const onTrack = () => {
+    const found = parcels.find(
+      (p) => p.rNumber.toLowerCase() === query.trim().toLowerCase()
+    );
+    setResult(found || null);
+    setSearched(true);
+  };
+
+  return (
+    <ScrollView contentContainerStyle={styles.form}>
+      <Text style={styles.title}>Track Parcel</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter R. Number"
+        value={query}
+        onChangeText={setQuery}
+      />
+      <Btn title="Track" onPress={onTrack} color="#ea580c" />
+
+      {searched && !result && <Text style={styles.empty}>Parcel not found</Text>}
+      {result && (
+        <View style={styles.card}>
+          <Text style={styles.cardName}>{result.name}</Text>
+          <Text>R. Number: {result.rNumber}</Text>
+          <Text>Weight: {result.weight} kg</Text>
+          <Text>Type: {result.type}</Text>
+          <Text>Status: {result.status}</Text>
+        </View>
+      )}
+      <Btn title="Back" onPress={() => go('home')} color="#6b7280" />
+    </ScrollView>
+  );
+};
+
+/* ---------------- App root (simple screen switching) ---------------- */
+export default function App() {
+  const [screen, setScreen] = useState('home');
+  const [parcels, setParcels] = useState([]);
+
+  const addParcel = (p) => setParcels((prev) => [p, ...prev]);
+
+  return (
+    <SafeAreaView style={styles.flex}>
+      <StatusBar barStyle="dark-content" />
+      {screen === 'home' && <HomeScreen go={setScreen} />}
+      {screen === 'add' && <AddParcelScreen go={setScreen} addParcel={addParcel} />}
+      {screen === 'all' && <AllParcelsScreen go={setScreen} parcels={parcels} />}
+      {screen === 'track' && <TrackParcelScreen go={setScreen} parcels={parcels} />}
+    </SafeAreaView>
+  );
+}
+
+/* ---------------- Styles ---------------- */
+const styles = StyleSheet.create({
+  flex: { flex: 1, backgroundColor: '#f3f4f6' },
+  center: { flex: 1, justifyContent: 'center', padding: 24 },
+  form: { padding: 24 },
+  title: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 24,
+    color: '#111827',
+  },
+  label: { fontSize: 14, fontWeight: '600', marginBottom: 6, color: '#374151' },
+  input: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    fontSize: 16,
+  },
+  btn: {
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  btnText: { color: '#fff', fontSize: 17, fontWeight: '600' },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 12,
+    elevation: 2,
+  },
+  cardName: { fontSize: 18, fontWeight: 'bold', marginBottom: 4 },
+  empty: { textAlign: 'center', marginVertical: 20, color: '#6b7280', fontSize: 16 },
+});

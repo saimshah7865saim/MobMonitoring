@@ -1,0 +1,81 @@
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button } from 'react-native';
+
+export default function Myapp3() {
+  // Yeh teen "state" hain: jo cheez badalti rehti hai
+  const [name, setName] = useState('');        // naam
+  const [amount, setAmount] = useState('');    // amount
+  const [expenses, setExpenses] = useState([]); // sab expenses ki list
+
+  // Add button dabane par yeh chalta hai
+  const addExpense = () => {
+    if (name === '' || amount === '') {
+      return; // agar kuch khali ho to kuch na karo
+    }
+    const newItem = { id: Date.now(), name: name, amount: Number(amount) };
+    setExpenses([...expenses, newItem]); // purani list mein naya item jorho
+    setName('');   // box khali karo
+    setAmount('');
+  };
+
+  // Delete button dabane par yeh chalta hai
+  const deleteExpense = (id) => {
+    setExpenses(expenses.filter((item) => item.id !== id));
+  };
+
+  // Total nikalna
+  let total = 0;
+  expenses.forEach((item) => {
+    total = total + item.amount;
+  });
+
+  return (
+    <View style={{ flex: 1, padding: 20, paddingTop: 50 }}>
+      <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>
+        Expense Tracker
+      </Text>
+
+      <TextInput
+        placeholder="Expense name"
+        value={name}
+        onChangeText={setName}
+        style={{ borderWidth: 1, padding: 10, marginBottom: 10 }}
+      />
+
+      <TextInput
+        placeholder="Amount"
+        value={amount}
+        onChangeText={setAmount}
+        keyboardType="numeric"
+        style={{ borderWidth: 1, padding: 10, marginBottom: 10 }}
+      />
+
+      <Button title="Add Expense" onPress={addExpense} />
+
+      <Text style={{ fontSize: 20, marginTop: 20, marginBottom: 10 }}>
+        Expenses List
+      </Text>
+
+      {expenses.map((item) => (
+        <View
+          key={item.id}
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 8,
+          }}
+        >
+          <Text>
+            {item.name} - Rs. {item.amount}
+          </Text>
+          <Button title="Delete" color="red" onPress={() => deleteExpense(item.id)} />
+        </View>
+      ))}
+
+      <Text style={{ fontSize: 20, fontWeight: 'bold', marginTop: 20 }}>
+        Total: Rs. {total}
+      </Text>
+    </View>
+  );
+}
